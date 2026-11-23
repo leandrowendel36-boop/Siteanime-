@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<title>AnimeHub</title>
+<style>
+  :root{
+    --bg:#0b0b12;
+    --bg2:#12121c;
+    --card:#171724;
+    --line:#26263a;
+    --text:#ececf5;
+    --muted:#9a9ab5;
+    --accent:#8b5cf6;
+    --accent2:#ec4899;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;min-height:100vh;overflow-x:hidden;
+  }
+  img{display:block;max-width:100%}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+  .container{width:100%;max-width:1280px;margin:0 auto;padding:0 16px}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(11,11,18,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;gap:14px;height:64px}
+  .logo{
+    font-weight:800;font-size:1.35rem;letter-spacing:-.02em;white-space:nowrap;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .search{flex:1;position:relative;max-width:520px;margin-left:auto}
+  .search input{
+    width:100%;height:42px;padding:0 16px 0 42px;border-radius:999px;
+    background:var(--card);border:1px solid var(--line);color:var(--text);
+    font-size:.95rem;outline:none;transition:border-color .2s, box-shadow .2s;
+  }
+  .search input::placeholder{color:var(--muted)}
+  .search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+  .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--muted)}
+
+  /* ---------- Carousel ---------- */
+  .carousel{position:relative;margin-top:16px;border-radius:var(--radius);overflow:hidden;background:var(--bg2);touch-action:pan-y}
+  .slides{display:flex;transition:transform .6s cubic-bezier(.65,0,.35,1)}
+  .slide{
+    min-width:100%;position:relative;aspect-ratio:21/9;min-height:260px;
+    display:flex;align-items:flex-end;background-size:cover;background-position:center;
+  }
+  .slide::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(0deg,rgba(11,11,18,.96) 0%,rgba(11,11,18,.55) 45%,rgba(11,11,18,.1) 100%),
+               linear-gradient(90deg,rgba(11,11,18,.7) 0%,transparent 60%);
+  }
+  .slide-info{position:relative;padding:28px;max-width:640px}
+  .badge{
+    display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    padding:4px 10px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));margin-bottom:10px;
+  }
+  .slide h2{font-size:clamp(1.4rem,4vw,2.4rem);line-height:1.15;letter-spacing:-.02em;margin-bottom:8px}
+  .slide p{color:#cfcfe3;font-size:.95rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:16px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;font-weight:600;font-size:.95rem;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));transition:transform .15s, filter .2s;
+  }
+  .btn:hover{filter:brightness(1.12)}
+  .btn:active{transform:scale(.96)}
+  .btn.ghost{background:var(--card);border:1px solid var(--line)}
+  .arrow{
+    position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;
+    background:rgba(11,11,18,.6);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:2;
+    border:1px solid rgba(255,255,255,.12);transition:background .2s;
+  }
+  .arrow:hover{background:rgba(139,92,246,.7)}
+  .arrow.prev{left:12px}.arrow.next{right:12px}
+  .arrow svg{width:20px;height:20px;stroke:#fff}
+  .dots{position:absolute;bottom:12px;right:20px;display:flex;gap:6px;z-index:2}
+  .dot{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.35);transition:all .3s}
+  .dot.active{width:24px;background:var(--accent)}
+
+  /* ---------- Player ---------- */
+  #playerSection{display:none;margin-top:24px;scroll-margin-top:80px}
+  #playerSection.open{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .player-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+  .video-box{background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/9;position:relative;border:1px solid var(--line)}
+  .video-box video,.video-box iframe{width:100%;height:100%;border:0;display:block;background:#000}
+  .video-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);text-align:center;padding:20px;font-size:.95rem}
+  .player-meta{margin-top:14px}
+  .player-meta h3{font-size:1.3rem;letter-spacing:-.01em}
+  .player-meta .ep-title{color:var(--accent);font-weight:600;font-size:.95rem;margin:2px 0 8px}
+  .player-meta p{color:var(--muted);font-size:.92rem}
+  .player-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .ep-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;display:flex;flex-direction:column;max-height:560px;
+  }
+  .ep-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:700}
+  .ep-head span{color:var(--muted);font-weight:500;font-size:.85rem}
+  .ep-list{overflow-y:auto;flex:1;padding:8px}
+  .ep-list::-webkit-scrollbar{width:6px}
+  .ep-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+  .ep{
+    width:100%;display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;text-align:left;
+    transition:background .2s;
+  }
+  .ep:hover{background:rgba(255,255,255,.05)}
+  .ep.active{background:rgba(139,92,246,.18)}
+  .ep-num{
+    min-width:34px;height:34px;border-radius:9px;background:var(--bg2);display:grid;place-items:center;
+    font-weight:700;font-size:.85rem;color:var(--muted);
+  }
+  .ep.active .ep-num{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .ep-name{font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---------- Grid ---------- */
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin:32px 0 14px;gap:10px;flex-wrap:wrap}
+  .section-head h2{font-size:1.3rem;letter-spacing:-.01em}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;max-width:100%}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    padding:7px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);
+    font-size:.85rem;white-space:nowrap;color:var(--muted);transition:all .2s;
+  }
+  .chip:hover{color:var(--text)}
+  .chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;padding-bottom:48px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    display:flex;flex-direction:column;text-align:left;transition:transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 12px 32px rgba(139,92,246,.18)}
+  .cover{position:relative;aspect-ratio:2/3;background:var(--bg2);overflow:hidden}
+  .cover img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+  .card:hover .cover img{transform:scale(1.06)}
+  .cover .eps{
+    position:absolute;top:10px;left:10px;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:rgba(11,11,18,.75);backdrop-filter:blur(6px);
+  }
+  .cover .play{
+    position:absolute;inset:0;display:grid;place-items:center;background:rgba(11,11,18,.45);opacity:0;transition:opacity .25s;
+  }
+  .card:hover .play{opacity:1}
+  .play i{
+    width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  .play svg{width:22px;height:22px;fill:#fff;margin-left:3px}
+  .card-body{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .card-body h3{font-size:1rem;line-height:1.25}
+  .meta{font-size:.78rem;color:var(--accent)}
+  .card-body p{font-size:.82rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0}
+
+  footer{border-top:1px solid var(--line);padding:24px 0;text-align:center;color:var(--muted);font-size:.85rem}
+
+  /* ---------- Responsivo ---------- */
+  @media (max-width:900px){
+    .player-wrap{grid-template-columns:1fr}
+    .ep-panel{max-height:360px}
+  }
+  @media (max-width:600px){
+    .container{padding:0 12px}
+    .nav{height:58px;gap:10px}
+    .logo{font-size:1.15rem}
+    .carousel{margin-top:12px;border-radius:12px}
+    .slide{aspect-ratio:4/3;min-height:300px}
+    .slide-info{padding:18px 18px 34px}
+    .slide p{-webkit-line-clamp:2;font-size:.88rem}
+    .arrow{display:none}
+    .dots{right:50%;transform:translateX(50%);bottom:12px}
+    .grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .card-body{padding:10px 10px 14px}
+    .card-body h3{font-size:.92rem}
+    .card-body p{-webkit-line-clamp:2}
+    .cover .play{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="logo">AnimeHub</div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="Buscar anime, gênero..." autocomplete="off">
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Carrossel de destaque -->
+  <section class="carousel" id="carousel" aria-label="Destaques">
+    <div class="slides" id="slides"></div>
+    <button class="arrow prev" id="prevBtn" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button class="arrow next" id="nextBtn" aria-label="Próximo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <!-- Player -->
+  <section id="playerSection" aria-label="Player">
+    <div class="player-wrap">
+      <div>
+        <div class="video-box" id="videoBox"></div>
+        <div class="player-meta">
+          <h3 id="pTitle"></h3>
+          <div class="ep-title" id="pEp"></div>
+          <p id="pSyn"></p>
+          <div class="player-actions">
+            <button class="btn ghost" id="prevEp">⏮ Anterior</button>
+            <button class="btn" id="nextEp">Próximo ⏭</button>
+            <button class="btn ghost" id="closePlayer">✕ Fechar</button>
+          </div>
+        </div>
+      </div>
+      <aside class="ep-panel">
+        <div class="ep-head">Episódios <span id="epCount"></span></div>
+        <div class="ep-list" id="epList"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Grade -->
+  <div class="section-head">
+    <h2 id="gridTitle">Todos os animes</h2>
+    <div class="chips" id="chips"></div>
+  </div>
+  <section class="grid" id="grid"></section>
+
+</main>
+
+<footer>© <span id="year"></span> AnimeHub — todos os direitos reservados.</footer>
+
+<script>
+/* =====================================================================
+   ✏️  EDITE AQUI: lista de animes
+   ---------------------------------------------------------------------
+   Para adicionar um anime, copie um bloco { ... } e altere os campos:
+
+   title     → nome do anime
+   cover     → imagem da capa (vertical, ex: 300x450). URL ou caminho local
+   banner    → imagem larga do carrossel (ex: 1280x540). Se vazio, usa a capa
+   synopsis  → sinopse
+   genres    → lista de gêneros
+   year      → ano
+   featured  → true para aparecer no carrossel de destaque
+   episodes  → lista de episódios { title, url }
+               • url pode ser um arquivo de vídeo (.mp4, .webm, .m3u8*)
+               • ou um link de embed (YouTube: https://www.youtube.com/embed/ID)
+               * .m3u8 funciona nativamente no Safari; em outros navegadores
+                 precisaria da biblioteca hls.js.
+   ===================================================================== */
+const ANIMES = [
+  {
+    title: "Anime Exemplo 1",
+    cover: "",   // ex: "img/anime1.jpg"
+    banner: "",  // ex: "img/anime1-banner.jpg"
+    synopsis: "Um jovem aventureiro descobre um poder adormecido e parte em uma jornada épica para proteger seu mundo das trevas que se aproximam.",
+    genres: ["Ação", "Aventura"],
+    year: 2024,
+    featured: true,
+    episodes: [
+      { title: "Episódio 1 - O Começo", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+      { title: "Episódio 2 - A Jornada", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
+      { title: "Episódio 3 - O Desafio", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" }
+    ]
+  },
+  {
+    title: "Anime Exemplo 2",
+    cover: "",
+    banner: "",
+    synopsis: "Em uma escola repleta de segredos, uma garota comum se vê envolvida em mistérios sobrenaturais que mudarão sua vida para sempre.",
+    genres: ["Mistério", "Sobrenatural"],
+    year: 2023,
+    featured: true,
+    episodes: [
+      { title: "Episódio 1 - Estranho Encontro", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+      { title: "Episódio 2 - Segredos", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" }
+    ]
+  },
+  {
+    title: "Anime Exemplo 3",
+    cover: "",
+    banner: "",
+    synopsis: "Dois rivais de longa data precisam se unir em um torneio mundial onde apenas o time mais forte sairá vitorioso.",
+    genres: ["Esportes", "Comédia"],
+    year: 2022,
+    featured: true,
+    episodes: [
+      { title: "Episódio 1 - Rivais", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
+      { title: "Episódio 2 - Treino", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" },
+      { title: "Episódio 3 - A Final", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" }
+    ]
+  },
+  {
+    title: "Anime Exemplo 4",
+    cover: "",
+    banner: "",
+    synopsis: "Num futuro distante, uma androide desperta sem memórias e busca descobrir quem a criou — e por quê.",
+    genres: ["Ficção Científica", "Drama"],
+    year: 2021,
+    featured: false,
+    episodes: [
+      { title: "Episódio 1 - Despertar", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4" }
+    ]
+  },
+  {
+    title: "Anime Exemplo 5",
+    cover: "",
+    banner: "",
+    synopsis: "Um chef talentoso viaja por reinos mágicos coletando ingredientes lendários para preparar o banquete definitivo.",
+    genres: ["Fantasia", "Comédia"],
+    year: 2024,
+    featured: false,
+    episodes: [
+      { title: "Episódio 1 - Primeiro Prato", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" },
+      { title: "Episódio 2 - Sabores do Reino", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" }
+    ]
+  },
+  {
+    title: "Anime Exemplo 6",
+    cover: "",
+    banner: "",
+    synopsis: "Uma banda de garotos tenta realizar o sonho de tocar no maior palco do país enquanto enfrenta dilemas da juventude.",
+    genres: ["Música", "Drama"],
+    year: 2020,
+    featured: false,
+    episodes: [
+      { title: "Episódio 1 - Primeiro Acorde", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" }
+    ]
+  }
+];
+/* ===================== FIM DA ÁREA DE EDIÇÃO ===================== */
+
+
+/* ---------- Utilidades ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/* Gera uma imagem placeholder (gradiente + título) quando não há capa */
+function placeholder(title, w, h) {
+  const hue = [...title].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(${hue},65%,38%)"/><stop offset="1" stop-color="hsl(${(hue+60)%360},70%,18%)"/>
+    </linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <text x="50%" y="50%" fill="rgba(255,255,255,.85)" font-family="sans-serif" font-weight="800"
+      font-size="${Math.min(w,h)/5}" text-anchor="middle" dominant-baseline="middle">${esc(title.slice(0,2).toUpperCase())}</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+const coverOf  = (a) => a.cover  || placeholder(a.title, 300, 450);
+const bannerOf = (a) => a.banner || a.cover || placeholder(a.title, 1280, 540);
+
+/* ---------- Estado ---------- */
+let query = "";
+let genre = "Todos";
+let current = { anime: null, ep: 0 };
+
+/* ---------- Carrossel ---------- */
+let slideIdx = 0, slideTimer = null;
+const featured = ANIMES.map((a, i) => ({ a, i })).filter(x => x.a.featured);
+
+function buildCarousel() {
+  const list = featured.length ? featured : ANIMES.slice(0, 3).map((a, i) => ({ a, i }));
+  $("#slides").innerHTML = list.map(({ a, i }) => `
+    <div class="slide" style="background-image:url('${bannerOf(a).replace(/'/g, "%27")}')">
+      <div class="slide-info">
+        <span class="badge">Destaque</span>
+        <h2>${esc(a.title)}</h2>
+        <p>${esc(a.synopsis)}</p>
+        <button class="btn" data-play="${i}">▶ Assistir agora</button>
+      </div>
+    </div>`).join("");
+  $("#dots").innerHTML = list.map((_, k) => `<button class="dot" data-dot="${k}" aria-label="Slide ${k+1}"></button>`).join("");
+  slideIdx = 0; goSlide(0);
+  startAuto();
+}
+function goSlide(n) {
+  const total = $("#slides").children.length;
+  if (!total) return;
+  slideIdx = (n + total) % total;
+  $("#slides").style.transform = `translateX(-${slideIdx * 100}%)`;
+  document.querySelectorAll(".dot").forEach((d, k) => d.classList.toggle("active", k === slideIdx));
+}
+function startAuto() { stopAuto(); slideTimer = setInterval(() => goSlide(slideIdx + 1), 6000); }
+function stopAuto() { clearInterval(slideTimer); }
+
+$("#prevBtn").onclick = () => { goSlide(slideIdx - 1); startAuto(); };
+$("#nextBtn").onclick = () => { goSlide(slideIdx + 1); startAuto(); };
+$("#dots").addEventListener("click", e => {
+  const d = e.target.closest("[data-dot]");
+  if (d) { goSlide(+d.dataset.dot); startAuto(); }
+});
+$("#slides").addEventListener("click", e => {
+  const b = e.target.closest("[data-play]");
+  if (b) openPlayer(+b.dataset.play, 0);
+});
+/* swipe no celular */
+(() => {
+  const el = $("#carousel"); let x0 = null;
+  el.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; stopAuto(); }, { passive: true });
+  el.addEventListener("touchend", e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) goSlide(slideIdx + (dx < 0 ? 1 : -1));
+    x0 = null; startAuto();
+  });
+})();
+
+/* ---------- Grade + busca + gêneros ---------- */
+function buildChips() 
